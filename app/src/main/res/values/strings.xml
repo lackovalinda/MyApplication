@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">DraftApplication</string>
+    <string name="logout_user">Logout user</string>
+    <string name="delete_user">Delete user</string>
+    <string name="show_sent_messages">Show sent messages</string>
+    <string name="email">Email</string>
+    <string name="enter_message">Enter message</string>
+    <string name="google_voice_assistant">Google Voice Assistant</string>
+    <string name="send_message">Send message</string>
+    <string name="type_an_email_to_find_user">Type an email to find user:</string>
+    <string name="button">Button</string>
+    <string name="about">About</string>
+    <string name="profile">Profile</string>
+    <string name="nickname">Nickname</string>
+    <string name="enter_the_email">Enter the email</string>
+    <string name="enter_the_password">Enter the password</string>
+    <string name="string_resource">This [img src=example/] is an icon.</string>
+    <string name="welcome">Welcome to DraftApplication!\n</string>
+    <string name="instructions">This application was invented primary as aim for visually impaired people.
+        In default mode, there is enabled Google Voice Assistant on the majority of buttons and actions,
+        those setting could be change later in application settings. \n\nThere are also special buttons highlighted with pink-magenta colour, which appears within the actions that require input
+        - a user is able to use this button to record his own voice and it will be converted into plain text.
+        \n\nHopefully</string>
+    <string name="proceed_to_register">Proceed to register</string>
+    <string name="fb_app_id">317941182223076</string>
+    <string name="fb_login_protocol_scheme">fb1343643482425305</string>
+    <string name="back_to_register_activity">Back to register activity</string>
+    <string name="settings">Settings</string>
+    <string name="already_have_the_account">Already have the account?</string>
+    <string name="register_with_email">Register with email</string>
+    <string name="enter_the_email_address">Enter the email address</string>
+    <string name="enter_password">Enter password</string>
+    <string name="enter_nickname">Enter nickname</string>
+    <string name="switch_to_extra_large_mode">Switch to extra large mode</string>
+    <string name="type_the_message">Type the message</string>
+</resources>

@@ -1,0 +1,41 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ProfileActivity">
+<!-- "Mark Favorite", should appear as action button if possible -->
+
+
+    <item
+        android:id="@+id/profil"
+        android:title="@string/profile"
+        android:icon="@drawable/me"
+        app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/about"
+        android:title="@string/about"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/action_settings"
+        android:title="@string/settings"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/users"
+        android:title="Users"
+        android:icon="@drawable/message"
+        app:showAsAction="ifRoom"
+        tools:ignore="HardcodedText" />
+
+    <item
+        android:id="@+id/logout"
+        android:title="@string/logout_user"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/delete"
+        android:title="@string/delete_user"
+        app:showAsAction="never" />
+
+
+
+</menu>
