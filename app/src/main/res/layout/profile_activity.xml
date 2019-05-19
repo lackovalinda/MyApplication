@@ -16,7 +16,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimaryDark"
+            android:background="@color/colorPrimaryLight"
             android:drawablePadding="1dp"
             android:minHeight="?attr/actionBarSize"
             android:theme="?attr/actionBarTheme">
@@ -50,7 +50,7 @@
             android:layout_marginTop="5dp"
             android:text="username"
             android:textColor="@color/black"
-            android:textSize="35dp"
+            android:textSize="36sp"
             android:textStyle="bold" />
 
         <TextView
@@ -93,7 +93,7 @@
             android:orientation="vertical"
             android:visibility="invisible" />
         <LinearLayout
-            android:background="@color/colorPrimary"
+            android:background="@color/colorPrimaryLight"
             android:gravity="center"
             android:orientation="vertical"
             android:layout_width="200dp"
@@ -115,7 +115,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <LinearLayout
-            android:background="@color/yellowGreen"
+            android:background="@color/colorPrimaryDark"
             android:gravity="center"
             android:orientation="vertical"
             android:layout_width="200dp"
@@ -139,7 +139,7 @@
             android:orientation="vertical"
             android:visibility="invisible" />
         <LinearLayout
-            android:background="@color/darkBlue"
+            android:background="@color/blue"
             android:gravity="center"
             android:orientation="vertical"
             android:layout_width="200dp"

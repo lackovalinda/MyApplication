@@ -2,9 +2,11 @@ package com.example.draftapplication;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,6 +18,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View.OnClickListener;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -50,7 +55,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
     private DatabaseReference ref;
     private ImageView image;
     private Bitmap bitmap;
-    private Intent pickPhoto;
     private String uid;
     private FirebaseStorage storage;
     private StorageReference storageRef;
@@ -62,9 +66,66 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.profile_activity);
 
+        TextView email1 = (TextView) findViewById(R.id.profileEmail);
+        TextView name1 = (TextView) findViewById(R.id.userName);
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         myToolbar.setTitle("My Profile");
         setSupportActionBar(myToolbar);
+
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
+        image = (ImageView) findViewById(R.id.imageButton);
+        isPhotoSet = false;
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Retrieving user data");
+        progressDialog.show();
+
+        if (user != null) {
+            uid = user.getUid();
+            email1.setText(user.getEmail());
+            name1.setText(user.getDisplayName());
+
+            ref = FirebaseDatabase.getInstance().getReference("Users").child(uid);
+            ref.addValueEventListener(new ValueEventListener() {
+
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for(DataSnapshot d: dataSnapshot.getChildren()) {
+                        if (d.getKey().equals("image")) {
+                            if (d.getValue().equals("set")) {
+                                isPhotoSet = true;
+                            }
+                            Toast.makeText(getApplicationContext(), "photo is set " + isPhotoSet, Toast.LENGTH_SHORT).show();
+                            setPhoto();
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
+            returnName(uid);
+
+            if (isPhotoSet) {
+                setPhoto();
+            }
+            progressDialog.dismiss();
+            image.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+
+                    String strAvatarPrompt = "Choose a picture to use as your avatar!";
+                    Intent pickPhoto = new Intent();
+                    pickPhoto.setType("image/*");
+                    pickPhoto.setAction(Intent.ACTION_GET_CONTENT);
+                    pickPhoto.addCategory(Intent.CATEGORY_OPENABLE);
+                    startActivityForResult(Intent.createChooser(pickPhoto, strAvatarPrompt), TAKE_AVATAR_GALLERY_REQUEST);
+                }
+            });
+        }
+
         myToolbar.setOnMenuItemClickListener(item -> {
 
             String id = item.getTitle().toString();
@@ -85,23 +146,49 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                     finish();
                     break;
                 case "Logout user":
-                    mAuth.signOut();
-                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                    finish();
+                    if (user != null) {
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                        boolean Islogin = prefs.getBoolean("Islogin", false);
+
+                        if (Islogin) {
+
+                            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                    .requestIdToken(getString(R.string.default_web_client_id))
+                                    .requestEmail()
+                                    .build();
+
+                            GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+                            mGoogleSignInClient.signOut()
+                                    .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                                            finish();
+                                        }
+                                    });
+
+                        } else {
+                            mAuth.signOut();
+                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                            finish();
+                        }
+                    }
                     break;
                 case "Delete user":
+
                     if (user != null) {
-                        user.delete()
-                                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(Task<Void> task) {
-                                        if (task.isSuccessful()) {
-                                            Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
-                                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                            user.delete()
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
+                                                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                                            }
                                         }
-                                    }
-                                });
-                    }
+                                    });
+                        }
+
                     finish();
                     break;
                 default:
@@ -111,77 +198,28 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             return true;
             });
 
-        TextView email1 = (TextView) findViewById(R.id.profileEmail);
-        TextView name1 = (TextView) findViewById(R.id.userName);
 
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
-        image = (ImageView) findViewById(R.id.imageButton);
-        isPhotoSet = false;
         ImageButton btn_send = (ImageButton) findViewById(R.id.sendMessage);
         ImageButton show_friends = (ImageButton) findViewById(R.id.friends);
+        ImageButton find = (ImageButton) findViewById(R.id.find);
         ImageButton info = (ImageButton) findViewById(R.id.about);
+
+        find.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), UserListActivity.class));
+                //finish();
+            }
+        });
+
 
         info.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getApplicationContext(), InfoActivity.class));
-                finish();
+                //finish();
             }
         });
-
-        if (user != null) {
-            uid = user.getUid();
-            email1.setText(user.getEmail());
-            name1.setText(user.getDisplayName());
-
-            ref = FirebaseDatabase.getInstance().getReference("Users").child(uid);
-            returnName();
-
-            storage = FirebaseStorage.getInstance();
-            storageRef = storage.getReference().child(uid);
-            final long ONE_MEGABYTE = 1024 * 1024;
-
-            if (!isPhotoSet) {
-                progressDialog = new ProgressDialog(this);
-                progressDialog.setTitle("Retrieving user data");
-                progressDialog.show();
-
-                storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
-                    byte[] imageData = null;
-                    Bitmap imageBitmap = null;
-                    try
-                    {
-                        final int THUMBNAIL_SIZE = 64;
-                        imageBitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.length);
-                        imageBitmap = Bitmap.createScaledBitmap(imageBitmap, 200, 200, false);
-                    }
-                    catch(Exception ex) {
-                    }
-                    image.setImageBitmap(imageBitmap);
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(Exception exception) {
-                    }
-                });
-
-                progressDialog.dismiss();
-            }
-
-
-            image.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    String strAvatarPrompt = "Choose a picture to use as your avatar!";
-                    //Intent pickPhoto = new Intent(Intent.ACTION_PICK);
-                    pickPhoto = new Intent();
-                    pickPhoto.setType("image/*");
-                    pickPhoto.setAction(Intent.ACTION_GET_CONTENT);
-                    pickPhoto.addCategory(Intent.CATEGORY_OPENABLE);
-
-                    startActivityForResult(Intent.createChooser(pickPhoto, strAvatarPrompt), TAKE_AVATAR_GALLERY_REQUEST);
-                }
-            });
-        }
     }
 
     @Override
@@ -198,46 +236,12 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
 
                 case TAKE_AVATAR_GALLERY_REQUEST:
                     if (resultCode == RESULT_OK)
-                        try {
-                            // We need to recyle unused bitmaps
-                            if (bitmap != null) {
-                                bitmap.recycle();
-                            }
-                            InputStream stream = getContentResolver().openInputStream(data.getData());
-                            bitmap = BitmapFactory.decodeStream(stream);
-                            uid = mAuth.getUid();
-                            FirebaseStorage storage = FirebaseStorage.getInstance();
-                            StorageReference storageRef = storage.getReference().child(uid);
-
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            Bitmap convertedImage = getResizedBitmap(bitmap, 350);
-                            convertedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                            final byte[] array = baos.toByteArray();
-
-                            UploadTask uploadTask = storageRef.putBytes(array);
-
-                            uploadTask.addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(Exception exception) {
-                                    Toast.makeText(getApplicationContext(), "picture was not uploaded", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                            uploadTask.addOnSuccessListener(taskSnapshot -> {
-                                ref.child("image").setValue("set");
-                                Toast.makeText(getApplicationContext(), "picture was uploaded", Toast.LENGTH_SHORT).show();
-                            });
-
-                            stream.close();
-                            image.setImageBitmap(convertedImage);
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                      uploadPhoto(data);
                     break;
 
                 default:
                     super.onActivityResult(requestCode, resultCode, data);
+                    break;
 
             }
         }
@@ -258,9 +262,11 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
     }
 
 
-    public void returnName() {
+    public void returnName(String uid) {
+
         final String[] name = {new String()};
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("Users").child(uid);
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
                                                @Override
                                                public void onDataChange(DataSnapshot dataSnapshot) {
                                                    int i = 0;
@@ -269,11 +275,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                                                        if (userSnapShot.getKey().equals("username")) {
                                                            name[0] = userSnapShot.getValue().toString();
                                                            setName(name[0]);
-                                                       }
-                                                       if (userSnapShot.getKey().equals("image")) {
-                                                           if (userSnapShot.getValue().equals("set")){
-                                                               isPhotoSet = true;
-                                                           }
                                                        }
                                                    }
                                                }
@@ -292,6 +293,71 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                 .build();
         FirebaseAuth.getInstance().getCurrentUser().updateProfile(profileUpdates);
 
+    }
+
+    public void setPhoto(){
+
+        storage = FirebaseStorage.getInstance();
+        storageRef = storage.getReference().child(uid);
+        final long ONE_MEGABYTE = 1024 * 1024;
+
+        storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
+            byte[] imageData = null;
+            Bitmap imageBitmap = null;
+            try
+            {
+                final int THUMBNAIL_SIZE = 64;
+                imageBitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.length);
+                imageBitmap = Bitmap.createScaledBitmap(imageBitmap, 400, 500, false);
+            }
+            catch(Exception ex) {
+            }
+
+            image.setImageBitmap(imageBitmap);
+
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(Exception exception) {
+            }
+        });
+    }
+
+    public void uploadPhoto(Intent data){
+        try {
+            if (bitmap != null) {        // We need to recyle unused bitmaps
+                bitmap.recycle();
+            }
+            InputStream stream = getContentResolver().openInputStream(data.getData());
+            bitmap = BitmapFactory.decodeStream(stream);
+            uid = mAuth.getUid();
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReference().child(uid);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Bitmap convertedImage = getResizedBitmap(bitmap, 350);
+            convertedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            final byte[] array = baos.toByteArray();
+
+            UploadTask uploadTask = storageRef.putBytes(array);
+
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(Exception exception) {
+                    Toast.makeText(getApplicationContext(), "picture was not uploaded", Toast.LENGTH_SHORT).show();
+                }
+            });
+            uploadTask.addOnSuccessListener(taskSnapshot -> {
+                ref.child("image").setValue("set");
+                Toast.makeText(getApplicationContext(), "picture was uploaded", Toast.LENGTH_SHORT).show();
+            });
+
+            stream.close();
+            image.setImageBitmap(convertedImage);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

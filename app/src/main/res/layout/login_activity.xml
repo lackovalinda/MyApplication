@@ -28,7 +28,8 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/enter_the_email"
-        android:layout_marginTop="250sp"
+        android:textSize="25sp"
+        android:layout_marginTop="170sp"
         android:inputType="textEmailAddress" />
 
     <EditText
@@ -37,23 +38,24 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="@string/enter_the_password"
+        android:textSize="25sp"
         android:inputType="textPassword" />
 
 
-        <Button
-            android:id="@+id/login"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:background="@color/colorAccent"
-            android:text="@string/common_signin_button_text"
-            android:textAllCaps="true"
-            android:textColor="#FFFF"
-            />
+    <Button
+        android:id="@+id/login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:background="@color/colorPrimaryDark"
+        android:text="@string/common_signin_button_text"
+        android:textSize="25sp"
+        android:textAllCaps="true"
+        android:textColor="#FFFF" />
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp" />
 
@@ -61,15 +63,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
+        <Button
             android:id="@+id/back_to_reg"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="45sp"
             android:layout_alignParentBottom="true"
             android:layout_marginBottom="4dp"
-            app:maxImageSize="60dp"
-            android:backgroundTint="@android:color/transparent"
-            app:srcCompat="@drawable/arrow_left" />
+            android:text="@string/back_to_register_activity"
+            android:textSize="20sp"
+            android:backgroundTint="@color/blue" />
 
     </RelativeLayout>
 

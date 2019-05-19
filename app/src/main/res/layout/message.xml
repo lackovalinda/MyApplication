@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="@dimen/activity_horizontal_margin"
+    android:paddingVertical="@dimen/activity_vertical_margin"
+    android:background="@drawable/bubble_out">
 
     <TextView
         android:layout_width="match_parent"
@@ -16,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/message_user"
         android:layout_alignParentEnd="true"
+        android:paddingRight="18sp"
         android:id="@+id/message_time" />
 
     <TextView
@@ -25,8 +33,9 @@
         android:layout_alignParentStart="true"
         android:layout_marginTop="5dp"
         android:id="@+id/message_text"
+        android:paddingRight="18sp"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textSize="18sp" />
 
-
 </RelativeLayout>
+</LinearLayout>

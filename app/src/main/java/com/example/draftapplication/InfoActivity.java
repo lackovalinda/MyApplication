@@ -47,26 +47,6 @@ public class InfoActivity extends AppCompatActivity {
                     case "Settings":
                         startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
                         break;
-                    case "Logout user":
-                        mAuth.signOut();
-                        //googleApiClient.maybeSignOut();
-                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
-
-                        break;
-                    case "Delete user":
-                        if (user != null) {
-                            user.delete()
-                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                                            }
-                                        }
-                                    });
-                        }
-                        break;
                     default:
                         Toast.makeText(getApplicationContext(), "default: " + item.getTitle(), Toast.LENGTH_LONG).show();
                         break;

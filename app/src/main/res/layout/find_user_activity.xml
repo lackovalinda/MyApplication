@@ -12,7 +12,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/colorPrimaryLight"
         android:drawablePadding="1dp"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme">
@@ -39,7 +39,7 @@
         android:layout_gravity="center">
 
         <LinearLayout
-            android:background="@color/colorPrimaryDark"
+            android:background="@color/blue"
             android:orientation="vertical"
             android:layout_width="100dp"
             android:layout_height="80dp"
@@ -61,7 +61,7 @@
             android:gravity="center">
 
             <ImageButton
-                android:id="@+id/sendVoiceMessage"
+                android:id="@+id/btn_record"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/mic"

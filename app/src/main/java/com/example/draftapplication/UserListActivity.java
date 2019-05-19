@@ -31,6 +31,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -44,6 +45,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -52,12 +54,13 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
     private static final int MY_DATA_CHECK_CODE = 1;
     private static final int USER_CODE = 100;
     private static final int RESULT_SPEECH = 1000;
+    private static final int FIND_USER = 1001;
     private FirebaseListAdapter<User> adapter;
     private ListView listOfUsers;
     private TextToSpeech textToSpeech;
     private EditText email;
     private Set<User> users = new HashSet<>();
-    private Query query, dbref;
+    private Query query;
     private String input, uid, record = null, text, myUid;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
@@ -70,8 +73,8 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         setContentView(R.layout.find_user_activity);
         myDialog = new Dialog(this);
 
-        FloatingActionButton btn_record = (FloatingActionButton) findViewById(R.id.record_btn);
-        FloatingActionButton btn_find = (FloatingActionButton) findViewById(R.id.find);
+        ImageButton btn_record = (ImageButton) findViewById(R.id.btn_record);
+        ImageButton btn_find = (ImageButton) findViewById(R.id.find);
 
         email = (EditText) findViewById(R.id.profileEmail);
         listOfUsers = (ListView) findViewById(R.id.list_of_users);
@@ -131,9 +134,51 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         btn_find.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final boolean[] isFound = {false};
                 input = email.getText().toString();
                 query = FirebaseDatabase.getInstance().getReference().child("Users");
+                query.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        for (DataSnapshot userSnapShot : dataSnapshot.getChildren()) {
+
+                            if (input != null && userSnapShot.getValue(User.class).getEmail().equals(email.getText().toString())){
+
+                                users.add(userSnapShot.getValue(User.class));
+                                uid = userSnapShot.getValue(User.class).getId();
+                                isFound[0] = true;
+                            }
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+                if (isFound[0]){
+                    query = query.orderByChild(uid).limitToFirst(1);
+                    Toast.makeText(getApplicationContext(), "query has been set", Toast.LENGTH_SHORT).show();
+                }
                 displayUsers(USER_CODE,1,getIntent());
+            }
+        });
+
+        btn_record.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo...");
+
+                try {
+                    startActivityForResult(intent, FIND_USER);
+                } catch (ActivityNotFoundException a) {
+                    Toast t = Toast.makeText(getApplicationContext(),"Opps! Your device doesn't support Speech to Text", Toast.LENGTH_LONG);
+                    t.show();
+                }
+
             }
         });
 
@@ -189,7 +234,17 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                     myUid = mAuth.getCurrentUser().getUid();
                     sendMessages(text, user.getDisplayName(), myUid);
                 } else {
-                    Toast.makeText(getApplicationContext(), "You have not recorded any messsage", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "You have not say any name", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case FIND_USER:
+                if (data != null) {
+                    ArrayList<String> textik = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    text = textik.get(0);
+                    Toast.makeText(getApplicationContext(), text,  Toast.LENGTH_SHORT).show();
+                    //getUserFromEmail(text);
+                } else {
+                    Toast.makeText(getApplicationContext(), "You have not say any name", Toast.LENGTH_SHORT).show();
                 }
                 break;
 
@@ -202,50 +257,7 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
     private void displayUsers(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot userSnapShot : dataSnapshot.getChildren()) {
-
-                    if (input != null && userSnapShot.getValue(User.class).getEmail().equals(email.getText().toString())){
-
-                        users.add(userSnapShot.getValue(User.class));
-                        uid = userSnapShot.getValue(User.class).getId();
-                        setUid(uid);
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
-
-
-        if(dbref != null) {
-            FirebaseListOptions<String> options1;
-            options1 = new FirebaseListOptions.Builder<String>()
-                            .setQuery(dbref, String.class)
-                            .setLayout(R.layout.user_item)
-                            .build();
-            FirebaseListAdapter<String> adapter1;
-            adapter1 = new FirebaseListAdapter<String>(options1){
-
-                @Override
-                protected void populateView(View v, String model, int position) {
-                    TextView email = (TextView) v.findViewById(R.id.profileEmail);
-                    TextView name = (TextView) v.findViewById(R.id.username);
-                    ImageView photo = (ImageView) v.findViewById(R.id.photo);
-
-                    if (position == 0) {
-                        Toast.makeText(UserListActivity.this, model, Toast.LENGTH_SHORT).show();
-                    }
-                }
-            };
-
-        }
-        else {
-            FirebaseListOptions<User> options;
+        FirebaseListOptions<User> options;
            options =  new FirebaseListOptions.Builder<User>()
                             .setQuery(query, User.class)
                             .setLayout(R.layout.user_item)
@@ -263,11 +275,14 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                 name.setText(model.getUsername());
 
                 String id = model.getId();
-                final long ONE_MEGABYTE = 1024 * 1024;
+
+                Toast.makeText(getApplicationContext(), "id je " + id, Toast.LENGTH_SHORT).show();
+
+                setPhoto(id, photo, 54, 54);
+                /*
                 StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(id);
 
-                if (uid != null) {
-                    //Toast.makeText(UserListActivity.this, "referencia na storage " + storageRef.toString(), Toast.LENGTH_SHORT).show();
+                if (id != null && storageRef != null) {
                     storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
                         Bitmap imageBitmap = null;
                         try {
@@ -293,12 +308,14 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                     });
 
                 }
+                */
+
         }};
         assert listOfUsers != null;
         adapter.startListening();
         listOfUsers.setAdapter(adapter);
     }
-    }
+
 
     @Override
     public void onStop() {
@@ -357,14 +374,13 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
     }
 
-    public void setUid(String uid1){
-        dbref = FirebaseDatabase.getInstance().getReference().child("Users/"+ uid1);
-    }
 
     public void showPopup(View v, User user1) {
 
         TextView btn_close, username, email;
         ImageButton btn_sendMessage, btn_sendVoiceMessage;
+        String isPhotoSet;
+        ImageView photo;
 
         myDialog.setContentView(R.layout.user_popup);
         btn_close =(TextView) myDialog.findViewById(R.id.close);
@@ -372,10 +388,15 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         btn_sendVoiceMessage = (ImageButton) myDialog.findViewById(R.id.sendVoiceMessage);
         username = (TextView) myDialog.findViewById(R.id.userName);
         email = (TextView) myDialog.findViewById(R.id.profileEmail);
+        photo = (ImageView) myDialog.findViewById(R.id.userPhoto);
 
         btn_close.setText("X");
         email.setText(user1.getEmail());
         username.setText(user1.getUsername());
+        isPhotoSet = user1.getPhoto();
+
+        setPhoto(user1.getId(), photo, 400, 500);
+
 
         btn_close.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -403,13 +424,9 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                 try {
                     startActivityForResult(intent, RESULT_SPEECH);
                 } catch (ActivityNotFoundException a) {
-                    Toast t = Toast.makeText(getApplicationContext(),
-                            "Opps! Your device doesn't support Speech to Text",
-                            Toast.LENGTH_LONG);
+                    Toast t = Toast.makeText(getApplicationContext(),"Opps! Your device doesn't support Speech to Text", Toast.LENGTH_LONG);
                     t.show();
                 }
-
-                //sendMessages(text, user.getDisplayName(), uid);
 
             }
         });
@@ -424,6 +441,8 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
             }
         });
+
+
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.show();
     }
@@ -459,5 +478,52 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         Toast.makeText(getApplicationContext(), "result je  " + result + "   thread id " + threadId, Toast.LENGTH_LONG).show();
 
         return threadId;
+    }
+
+
+    public boolean findUser(String name){
+
+        DatabaseReference dbref = FirebaseDatabase.getInstance().getReference("Users");
+        dbref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for(DataSnapshot ds : dataSnapshot.getChildren()){
+                    if (ds.getValue(User.class).getUsername().equals(name)){
+
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+        return false;
+    }
+
+    public void setPhoto(String id, ImageView image, int width, int height){
+        StorageReference storage;
+        storage = FirebaseStorage.getInstance().getReference().child(id);
+
+        final long ONE_MEGABYTE = 1024 * 1024;
+
+        storage.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
+            Bitmap imageBitmap = null;
+            try
+            {
+                imageBitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.length);
+                imageBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+            }
+            catch(Exception ex) {
+            }
+
+            image.setImageBitmap(imageBitmap);
+
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(Exception exception) {
+            }
+        });
     }
 }

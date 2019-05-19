@@ -31,7 +31,8 @@
         android:paddingLeft="20sp"
         android:paddingRight="20sp"
         android:padding="5dp"
-        android:layout_gravity="center">
+        android:gravity="bottom|center_horizontal"
+        android:layout_gravity="center|bottom">
 
         <LinearLayout
             android:background="@color/magentaPink"

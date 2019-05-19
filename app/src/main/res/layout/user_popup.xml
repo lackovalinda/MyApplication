@@ -25,6 +25,7 @@
         android:orientation="vertical">
 
         <ImageView
+            android:id="@+id/userPhoto"
             android:layout_width="180dp"
             android:layout_height="180dp"
             android:layout_gravity="center"

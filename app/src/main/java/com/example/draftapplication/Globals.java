@@ -3,14 +3,14 @@ package com.example.draftapplication;
 import android.app.Application;
 
 public class Globals extends Application {
-    private boolean isChecked = true;
-    private boolean permissionsAccepted = false;
+    private boolean isChecked;
+    private boolean permissionsAccepted;
 
-    public boolean getData(){
+    public boolean getSettings(){
         return this.isChecked;
     }
 
-    public void setData(boolean option){
+    public void setSettings(boolean option){
         this.isChecked = option;
     }
 

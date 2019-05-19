@@ -10,7 +10,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/colorPrimaryLight"
         android:drawablePadding="1dp"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme">
@@ -24,7 +24,7 @@
         android:paddingBottom="@dimen/activity_vertical_margin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:text="@string/switch_to_extra_large_mode"
+        android:textSize="25sp"
+        android:text="Set supportive speech output"
         android:visibility="visible" />
 </LinearLayout>
