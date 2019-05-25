@@ -1,17 +1,22 @@
 package com.example.draftapplication;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.speech.RecognizerIntent;
 import android.text.format.DateFormat;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,21 +47,31 @@ public class ChattingActivity extends AppCompatActivity {
     private String myUid, otherUserUid, threadId, text;
     private ImageButton btn_sendMessage, btn_sendVoiceMessage;
     private EditText input;
+    private boolean groupChat = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.chat_window);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         Intent intent = getIntent();
         User otherUser = (User) intent.getSerializableExtra("otherUser");
+        if (otherUser == null){
+            groupChat = true;
+        }
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         listOfMessages = (ListView) findViewById(R.id.list_of_messages);
         btn_sendMessage = (ImageButton) findViewById(R.id.sendMessage);
         btn_sendVoiceMessage = (ImageButton) findViewById(R.id.sendVoiceMessage);
         input = (EditText)findViewById(R.id.input);
-        myToolbar.setTitle("Chat with " + otherUser.getUsername());
+        if (!groupChat) {
+            myToolbar.setTitle("Chat with " + otherUser.getUsername());
+        }
+        else{
+            myToolbar.setTitle("Group chat");
+        }
         setSupportActionBar(myToolbar);
         myToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
 
@@ -137,9 +152,13 @@ public class ChattingActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
         Toast.makeText(getApplicationContext(), "default: " + user.getUid(), Toast.LENGTH_LONG).show();
-        myUid = user.getUid();
-        otherUserUid = otherUser.getId();
-        threadId = getThreadId();
+        threadId = "thread1";
+
+        if (!groupChat) {
+            myUid = user.getUid();
+            otherUserUid = otherUser.getId();
+            threadId = getThreadId();
+        }
         displayChatMessages(USER_DATA, 1, getIntent());
 
 
@@ -148,8 +167,13 @@ public class ChattingActivity extends AppCompatActivity {
     private void displayChatMessages(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        Query query = FirebaseDatabase.getInstance().getReference("Messages/threads").child(threadId);
-
+        Query query;
+        if (!groupChat) {
+            query = FirebaseDatabase.getInstance().getReference("Messages/threads").child(threadId);
+        }
+        else{
+            query = FirebaseDatabase.getInstance().getReference("Messages/threads").child("thread1");
+        }
         FirebaseListOptions<ChatMessage> options =
                 new FirebaseListOptions.Builder<ChatMessage>()
                         .setQuery(query, ChatMessage.class)
@@ -165,6 +189,20 @@ public class ChattingActivity extends AppCompatActivity {
                 messageText.setText(model.getMessageText());
                 messageUser.setText(model.getMessageUser());
                 messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)", model.getMessageTime()));
+
+        //        MessageViewHolder holder = new MessageViewHolder();
+                LayoutInflater messageInflater = (LayoutInflater) getApplicationContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+
+                /*
+                protected void populateViewHolder(ChatMessageViewHolder chatMessageViewHolder, ChatModel m, int i)
+                {
+                    if (model.getMessageUserID() != user.getUid()) {
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        params.gravity = Gravity.LEFT;
+                        v.setLayoutParams(params);
+                    }
+                }
+                */
             }
         };
         assert listOfMessages != null;

@@ -4,8 +4,21 @@
     android:layout_height="wrap_content"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:descendantFocusability="blocksDescendants"
+    android:background="@color/darkBlue"
     android:paddingHorizontal="@dimen/activity_horizontal_margin"
     android:paddingVertical="@dimen/activity_vertical_margin">
+
+    <TextView
+        android:id="@+id/username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/profileEmail"
+        android:layout_alignParentRight="true"
+        android:textSize="35dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
     <TextView
         android:id="@+id/profileEmail"
@@ -15,26 +28,5 @@
         android:textSize="20dp"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textStyle="normal|bold" />
-
-    <TextView
-        android:id="@+id/username"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/profileEmail"
-        android:layout_alignParentRight="true"
-        android:textSize="15sp"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ImageView
-                android:id="@+id/photo"
-                android:layout_width="40sp"
-                android:layout_height="40sp"
-                android:layout_alignParentLeft="true"
-                android:layout_marginTop="5dp"
-                android:src="@drawable/me"/>
-        </LinearLayout>
 
     </RelativeLayout>

@@ -76,9 +76,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
         user = mAuth.getCurrentUser();
         image = (ImageView) findViewById(R.id.imageButton);
         isPhotoSet = false;
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setTitle("Retrieving user data");
-        progressDialog.show();
 
         if (user != null) {
             uid = user.getUid();
@@ -94,16 +91,15 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                         if (d.getKey().equals("image")) {
                             if (d.getValue().equals("set")) {
                                 isPhotoSet = true;
+                                setPhoto();
+                                Toast.makeText(getApplicationContext(), "photo is set " + isPhotoSet, Toast.LENGTH_SHORT).show();
                             }
-                            Toast.makeText(getApplicationContext(), "photo is set " + isPhotoSet, Toast.LENGTH_SHORT).show();
-                            setPhoto();
                         }
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
-
                 }
             });
 
@@ -112,7 +108,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             if (isPhotoSet) {
                 setPhoto();
             }
-            progressDialog.dismiss();
             image.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 
@@ -177,12 +172,25 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                 case "Delete user":
 
                     if (user != null) {
-                            user.delete()
+                        String key = user.getUid();
+                        Toast.makeText(getApplicationContext(), "id is " + key, Toast.LENGTH_SHORT).show();
+
+                        user.delete()
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
                                         public void onComplete(Task<Void> task) {
                                             if (task.isSuccessful()) {
-                                                Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
+                                                DatabaseReference dr = FirebaseDatabase.getInstance().getReference("Users").child(key);
+                                                //Toast.makeText(getApplicationContext(), dr.toString(), Toast.LENGTH_SHORT).show();
+
+                                                dr.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<Void> task) {
+                                                        //Toast.makeText(getApplicationContext(), "user was deleted!", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                                FirebaseStorage.getInstance().getReference().child(key).delete();
+                                                //Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
                                                 startActivity(new Intent(getApplicationContext(), MainActivity.class));
                                             }
                                         }
@@ -200,7 +208,7 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
 
 
         ImageButton btn_send = (ImageButton) findViewById(R.id.sendMessage);
-        ImageButton show_friends = (ImageButton) findViewById(R.id.friends);
+        ImageButton group_chat = (ImageButton) findViewById(R.id.friends);
         ImageButton find = (ImageButton) findViewById(R.id.find);
         ImageButton info = (ImageButton) findViewById(R.id.about);
 
@@ -218,6 +226,13 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             public void onClick(View v) {
                 startActivity(new Intent(getApplicationContext(), InfoActivity.class));
                 //finish();
+            }
+        });
+
+        group_chat.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), ChattingActivity.class));
             }
         });
     }
@@ -306,9 +321,13 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             Bitmap imageBitmap = null;
             try
             {
+                progressDialog = new ProgressDialog(this);
+                progressDialog.setTitle("Retrieving user data");
+                progressDialog.show();
                 final int THUMBNAIL_SIZE = 64;
                 imageBitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.length);
                 imageBitmap = Bitmap.createScaledBitmap(imageBitmap, 400, 500, false);
+                progressDialog.dismiss();
             }
             catch(Exception ex) {
             }

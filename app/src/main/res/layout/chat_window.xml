@@ -4,14 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="@drawable/background_border"
     android:visibility="visible">
-
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -22,8 +17,6 @@
             android:minHeight="?attr/actionBarSize"
             android:theme="?attr/actionBarTheme">
         </androidx.appcompat.widget.Toolbar>
-
-    </LinearLayout>
 
     <ListView
         android:id="@+id/list_of_messages"
@@ -40,18 +33,28 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
         <EditText
             android:id="@+id/input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:layout_weight="2"
             android:layout_marginTop="20sp"
-            android:layout_marginStart="@dimen/activity_vertical_margin"
-            android:layout_marginEnd="@dimen/activity_vertical_margin"
+            android:layout_marginLeft="8dp"
             android:hint="@string/type_the_message"
             android:inputType="textLongMessage" />
+
+        <ImageButton
+            android:id="@+id/sendMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="10dp"
+            android:background="@android:drawable/ic_menu_send"
+            android:padding="20dp"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
     <LinearLayout
@@ -61,23 +64,8 @@
         android:paddingLeft="20sp"
         android:paddingRight="20sp"
         android:padding="5dp"
-        android:layout_gravity="center">
-
-        <LinearLayout
-            android:background="@color/colorPrimaryLight"
-            android:orientation="vertical"
-            android:layout_gravity="center_horizontal"
-            android:layout_width="100dp"
-            android:layout_height="80dp">
-
-            <ImageButton
-                android:id="@+id/sendMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:background="@drawable/message"
-                app:maxImageSize="20sp" />
-        </LinearLayout>
+        android:layout_gravity="center"
+        android:fitsSystemWindows="true">
 
         <LinearLayout
             android:orientation="vertical"

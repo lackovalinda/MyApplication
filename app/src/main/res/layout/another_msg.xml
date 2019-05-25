@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingVertical="10dp"
-    android:paddingRight="15dp"
-    android:paddingLeft="60dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="60dp"
     android:clipToPadding="false">
 
     <RelativeLayout
@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="@dimen/activity_horizontal_margin"
         android:paddingVertical="@dimen/activity_vertical_margin"
-        android:background="@drawable/my_message">
+        android:background="@drawable/another_message">
 
         <TextView
             android:layout_width="match_parent"

@@ -2,17 +2,8 @@ package com.example.draftapplication;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
-
-/*
-import com.facebook.AccessToken;
-import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
-import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
-import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
-*/
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -20,7 +11,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -41,6 +31,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -56,12 +49,10 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private static final int RC_SIGN_IN = 9001;
-    //CallbackManager callbackManager;
     private DatabaseReference reference;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.login_activity);
         LoginActivity.this.setTitle("Login");
 
@@ -75,12 +66,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         textView.setText("SIGN WITH GOOGLE ACCOUNT");
         textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, 50 );
         mAuth = FirebaseAuth.getInstance();
-
-        /*
-        if (FirebaseAuth.getInstance().getCurrentUser() != null){
-            startActivity(new Intent(getApplicationContext(), ProfileActivity.class));
-        }
-        */
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -135,56 +120,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 startActivity(new Intent(getApplicationContext(), MainActivity.class));
             }
         });
-
-
-        // Initialize Facebook Login button
-        /*
-        callbackManager = CallbackManager.Factory.create();
-        LoginButton loginButton = findViewById(R.id.login_fb);
-        loginButton.setReadPermissions("email", "public_profile");
-        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-                //Log.d(TAG, "facebook:onSuccess:" + loginResult);
-                handleFacebookAccessToken(loginResult.getAccessToken());
-            }
-
-            @Override
-            public void onCancel() {
-                //Log.d(TAG, "facebook:onCancel");
-                // ...
-            }
-
-            @Override
-            public void onError(FacebookException error) {
-                // Log.d(TAG, "facebook:onError", error);
-                // ...
-            }
-        });
-
-            }
-
-    private void handleFacebookAccessToken(AccessToken token) {
-        //Log.d(TAG, "handleFacebookAccessToken:" + token);
-
-        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            user = mAuth.getCurrentUser();
-                           // updateUI(user);
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Toast.makeText(LoginActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                           // updateUI(null);
-                        }
-                    }
-                });
-        */
     }
 
     private void signIn() {
@@ -198,9 +133,10 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode==RC_SIGN_IN){
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            Toast.makeText(getApplicationContext(), result.toString(), Toast.LENGTH_SHORT).show();
             if(result.isSuccess()){
                 GoogleSignInAccount account = result.getSignInAccount();
-                String photoUrl = account.getPhotoUrl().toString();
+                downloadPhoto(mAuth.getUid());
                 authWithGoogle(account);
             }
         }
@@ -214,9 +150,9 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 if(task.isSuccessful()){
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                     prefs.edit().putBoolean("Islogin", true).apply();
-
-                    if(!checkIfUserExists(mAuth.getCurrentUser().getUid())) {
-                        Toast.makeText(getApplicationContext(), "User is added to db", Toast.LENGTH_SHORT).show();
+                    boolean b = checkIfUserExists(mAuth.getCurrentUser().getEmail());
+                    if(!b) {
+                        Toast.makeText(getApplicationContext(), "user nie je v db " + mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
                         addUserToDb();
                     }
                     startActivity(new Intent(getApplicationContext(), ProfileActivity.class));
@@ -249,7 +185,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             @Override
             public void onComplete(Task<Void> task) {
                 if (task.isSuccessful()) {
-
+                    downloadPhoto(uid);
                 } else {
                     Toast.makeText(getApplicationContext(), "User cannot be added to database", Toast.LENGTH_SHORT).show();
                 }
@@ -258,22 +194,21 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         });
     }
 
-    public boolean checkIfUserExists(String id){
+    public boolean checkIfUserExists(String emailAdd){
         final boolean[] result = {false};
 
-        reference = FirebaseDatabase.getInstance().getReference("Users").child(id);
-        if (reference != null){
-            return true;
-        }
+        reference = FirebaseDatabase.getInstance().getReference("Users");
+        final int[] i = {0};
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot d: dataSnapshot.getChildren()){
-                    if (d.getValue(User.class).getId().equals(id)){
+                    if (d.getValue(User.class).getEmail().equals(emailAdd)){
                         result[0] = true;
                     }
                 }
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -286,7 +221,14 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
+    }
 
+    public void downloadPhoto(String uid){
+        GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(getParentActivityIntent());
+        GoogleSignInAccount acct = result.getSignInAccount();
+        Uri personPhoto = acct.getPhotoUrl();
+        Toast.makeText(getApplicationContext(), personPhoto.toString(), Toast.LENGTH_SHORT).show();
+        FirebaseStorage.getInstance().getReference().child(uid).putFile(personPhoto);
     }
 
 

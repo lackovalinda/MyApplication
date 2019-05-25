@@ -36,7 +36,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageException;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.Serializable;
@@ -55,7 +54,6 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
     private static final int USER_CODE = 100;
     private static final int RESULT_SPEECH = 1000;
     private static final int FIND_USER = 1001;
-    private FirebaseListAdapter<User> adapter;
     private ListView listOfUsers;
     private TextToSpeech textToSpeech;
     private EditText email;
@@ -136,15 +134,15 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
             public void onClick(View v) {
                 final boolean[] isFound = {false};
                 input = email.getText().toString();
-                query = FirebaseDatabase.getInstance().getReference().child("Users");
-                query.addValueEventListener(new ValueEventListener() {
+                Query queryUsers;
+                queryUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+                queryUsers.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
                         for (DataSnapshot userSnapShot : dataSnapshot.getChildren()) {
 
                             if (input != null && userSnapShot.getValue(User.class).getEmail().equals(email.getText().toString())){
-
                                 users.add(userSnapShot.getValue(User.class));
                                 uid = userSnapShot.getValue(User.class).getId();
                                 isFound[0] = true;
@@ -156,7 +154,8 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                     }
                 });
                 if (isFound[0]){
-                    query = query.orderByChild(uid).limitToFirst(1);
+                    //Query
+
                     Toast.makeText(getApplicationContext(), "query has been set", Toast.LENGTH_SHORT).show();
                 }
                 displayUsers(USER_CODE,1,getIntent());
@@ -264,12 +263,11 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                             .build();
 
 
-        adapter = new FirebaseListAdapter<User>(options){
+        FirebaseListAdapter<User> adapter = new FirebaseListAdapter<User>(options) {
             @Override
-            protected void populateView(View v,User model, int position) {
+            protected void populateView(View v, User model, int position) {
                 TextView email = (TextView) v.findViewById(R.id.profileEmail);
                 TextView name = (TextView) v.findViewById(R.id.username);
-                ImageView photo = (ImageView) v.findViewById(R.id.photo);
 
                 email.setText(model.getEmail());
                 name.setText(model.getUsername());
@@ -278,39 +276,8 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
                 Toast.makeText(getApplicationContext(), "id je " + id, Toast.LENGTH_SHORT).show();
 
-                setPhoto(id, photo, 54, 54);
-                /*
-                StorageReference storageRef = FirebaseStorage.getInstance().getReference().child(id);
-
-                if (id != null && storageRef != null) {
-                    storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
-                        Bitmap imageBitmap = null;
-                        try {
-                            final int THUMBNAIL_SIZE = 64;
-                            imageBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                            imageBitmap = Bitmap.createScaledBitmap(imageBitmap, THUMBNAIL_SIZE, THUMBNAIL_SIZE, false);
-                            photo.setImageBitmap(imageBitmap);
-                        } catch (Exception ex) {
-                        }
-
-
-                    }).addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(Exception exception) {
-                                int errorCode = ((StorageException) exception).getErrorCode();
-                                if (errorCode == StorageException.ERROR_OBJECT_NOT_FOUND) {
-                                    //StorageReference storageReference2 = FirebaseStorage.getInstance().getReference().child("Photos").child("photo_1.png");
-
-                                }
-
-                            }
-
-                    });
-
-                }
-                */
-
-        }};
+            }
+        };
         assert listOfUsers != null;
         adapter.startListening();
         listOfUsers.setAdapter(adapter);
@@ -441,8 +408,6 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
             }
         });
-
-
         myDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         myDialog.show();
     }
