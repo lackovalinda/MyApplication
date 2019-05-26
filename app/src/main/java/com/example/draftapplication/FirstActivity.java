@@ -24,8 +24,8 @@ public class FirstActivity extends AppCompatActivity implements TextToSpeech.OnI
 
     private static final int MY_DATA_CHECK_CODE = 1;
     private String text, record;
-
     private TextToSpeech textToSpeech;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,26 +100,6 @@ public class FirstActivity extends AppCompatActivity implements TextToSpeech.OnI
     }
 
 
-    public void printhashkey(){
-
-        try {
-            PackageInfo info = getPackageManager().getPackageInfo(
-                    "com.mytrendin.keyhash",
-                    PackageManager.GET_SIGNATURES);
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-
-        } catch (NoSuchAlgorithmException e) {
-
-        }
-
-    }
-
-
     @Override
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
@@ -139,6 +119,14 @@ public class FirstActivity extends AppCompatActivity implements TextToSpeech.OnI
             }
         } else {
             Toast.makeText(this, "TTS initialization failed", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
         }
     }
 

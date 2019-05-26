@@ -1,22 +1,18 @@
 package com.example.draftapplication;
 
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.speech.RecognizerIntent;
+import android.speech.tts.TextToSpeech;
 import android.text.format.DateFormat;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,17 +33,20 @@ import com.google.firebase.database.Query;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class ChattingActivity extends AppCompatActivity {
+public class ChattingActivity extends AppCompatActivity implements TextToSpeech.OnInitListener{
 
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private ListView listOfMessages;
     private static final int USER_DATA = 1;
+    private static final int MY_DATA_CHECK_CODE = 100;
     private static final int RESULT_SPEECH = 1000;
-    private String myUid, otherUserUid, threadId, text;
+    private String myUid, otherUserUid, threadId, text, record;
     private ImageButton btn_sendMessage, btn_sendVoiceMessage;
     private EditText input;
     private boolean groupChat = false;
+    private TextToSpeech textToSpeech;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -140,18 +139,13 @@ public class ChattingActivity extends AppCompatActivity {
                 try {
                     startActivityForResult(intent, RESULT_SPEECH);
                 } catch (ActivityNotFoundException a) {
-                    Toast t = Toast.makeText(getApplicationContext(),
-                            "Opps! Your device doesn't support Speech to Text",
-                            Toast.LENGTH_LONG);
-                    t.show();
+                    Toast.makeText(getApplicationContext(),"Your device doesn't support Speech to Text", Toast.LENGTH_LONG).show();
                 }
             }
         });
 
-
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
-        Toast.makeText(getApplicationContext(), "default: " + user.getUid(), Toast.LENGTH_LONG).show();
         threadId = "thread1";
 
         if (!groupChat) {
@@ -160,12 +154,33 @@ public class ChattingActivity extends AppCompatActivity {
             threadId = getThreadId();
         }
         displayChatMessages(USER_DATA, 1, getIntent());
+        listOfMessages.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
+                textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
 
+                    @Override
+                    public void onInit(int status) {
+                    }
+                });
+
+                Intent checkTTSIntent = new Intent();
+                checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+                startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
+                ChatMessage msg = (ChatMessage) listOfMessages.getItemAtPosition(position);
+                record = msg.getMessageText();
+
+                return true;
+            }
+        });
     }
 
     private void displayChatMessages(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Globals g = (Globals)getApplication();
+        g.setUserId(myUid);
 
         Query query;
         if (!groupChat) {
@@ -190,19 +205,12 @@ public class ChattingActivity extends AppCompatActivity {
                 messageUser.setText(model.getMessageUser());
                 messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)", model.getMessageTime()));
 
-        //        MessageViewHolder holder = new MessageViewHolder();
-                LayoutInflater messageInflater = (LayoutInflater) getApplicationContext().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+                if(model.getMessageUserID().equals("HY95Ptm5hdNy9q3vVNTEOGgyjdk1"))
+                    v.setRight(position);
+                else
+                    v.setLeft(position);
 
-                /*
-                protected void populateViewHolder(ChatMessageViewHolder chatMessageViewHolder, ChatModel m, int i)
-                {
-                    if (model.getMessageUserID() != user.getUid()) {
-                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                        params.gravity = Gravity.LEFT;
-                        v.setLayoutParams(params);
-                    }
-                }
-                */
+
             }
         };
         assert listOfMessages != null;
@@ -257,6 +265,57 @@ public class ChattingActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "You have not recorded any messsage", Toast.LENGTH_SHORT).show();
                 }
                 break;
+            case MY_DATA_CHECK_CODE:
+                if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                    textToSpeech.setLanguage(Locale.UK);
+                    textToSpeech = new TextToSpeech(getApplicationContext(), this);
+                } else {
+                    Intent installIntent = new Intent();
+                    installIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                    startActivity(installIntent);
+                }
+                break;
         }
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+        }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            if (textToSpeech != null) {
+                int result = textToSpeech.setLanguage(Locale.US);
+                if (result == TextToSpeech.LANG_MISSING_DATA ||
+                        result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Toast.makeText(this, "TTS language is not supported", Toast.LENGTH_LONG).show();
+                } else {
+                    if (record != null) {
+                        saySomething(record, 0);
+                    }else {
+                        saySomething("TTS is ready", 0);
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(this, "TTS initialization failed", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void saySomething(String text, int qmode) {
+        if (qmode == 1)
+            textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null);
+        else
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    public String getUserId(){
+        return FirebaseAuth.getInstance().getUid();
+    }
+
 }

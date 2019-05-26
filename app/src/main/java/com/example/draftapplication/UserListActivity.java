@@ -26,7 +26,6 @@ import com.firebase.ui.database.FirebaseListOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -40,9 +39,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -54,12 +51,11 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
     private static final int USER_CODE = 100;
     private static final int RESULT_SPEECH = 1000;
     private static final int FIND_USER = 1001;
+    private static final int ONE_USER = 101;
     private ListView listOfUsers;
     private TextToSpeech textToSpeech;
     private EditText email;
-    private Set<User> users = new HashSet<>();
-    private Query query;
-    private String input, uid, record = null, text, myUid;
+    private String input, othUid = null, record = null, text, myUid;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private Dialog myDialog;
@@ -109,6 +105,8 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                         break;
                     case "Delete user":
                         if (user != null) {
+
+
                             user.delete()
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
@@ -132,33 +130,31 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         btn_find.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final boolean[] isFound = {false};
-                input = email.getText().toString();
+
+                input = email.getText().toString().toLowerCase();
+
                 Query queryUsers;
                 queryUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+
                 queryUsers.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
                         for (DataSnapshot userSnapShot : dataSnapshot.getChildren()) {
 
-                            if (input != null && userSnapShot.getValue(User.class).getEmail().equals(email.getText().toString())){
-                                users.add(userSnapShot.getValue(User.class));
-                                uid = userSnapShot.getValue(User.class).getId();
-                                isFound[0] = true;
+                            if (input != null && userSnapShot.getValue(User.class).getEmail().toLowerCase().equals(email.getText().toString())){
+                                othUid = userSnapShot.getValue(User.class).getId();
+                                displayUsers(ONE_USER, 1, getIntent());
+                                return;
                             }
                         }
+                        Toast.makeText(getApplicationContext(), "all users showed", Toast.LENGTH_SHORT).show();
+                        displayUsers(USER_CODE, 1, getIntent());
                     }
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                     }
                 });
-                if (isFound[0]){
-                    //Query
-
-                    Toast.makeText(getApplicationContext(), "query has been set", Toast.LENGTH_SHORT).show();
-                }
-                displayUsers(USER_CODE,1,getIntent());
             }
         });
 
@@ -169,13 +165,12 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                 Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                 intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo...");
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo");
 
                 try {
                     startActivityForResult(intent, FIND_USER);
                 } catch (ActivityNotFoundException a) {
-                    Toast t = Toast.makeText(getApplicationContext(),"Opps! Your device doesn't support Speech to Text", Toast.LENGTH_LONG);
-                    t.show();
+                    Toast.makeText(getApplicationContext(),"Your device doesn't support Speech to Text", Toast.LENGTH_LONG).show();
                 }
 
             }
@@ -233,15 +228,14 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                     myUid = mAuth.getCurrentUser().getUid();
                     sendMessages(text, user.getDisplayName(), myUid);
                 } else {
-                    Toast.makeText(getApplicationContext(), "You have not say any name", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "You have not say any message", Toast.LENGTH_SHORT).show();
                 }
                 break;
             case FIND_USER:
                 if (data != null) {
                     ArrayList<String> textik = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                    text = textik.get(0);
-                    Toast.makeText(getApplicationContext(), text,  Toast.LENGTH_SHORT).show();
-                    //getUserFromEmail(text);
+                    text = textik.get(0).toLowerCase();
+                    findUserByName(text);
                 } else {
                     Toast.makeText(getApplicationContext(), "You have not say any name", Toast.LENGTH_SHORT).show();
                 }
@@ -255,6 +249,15 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
     private void displayUsers(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Query query = FirebaseDatabase.getInstance().getReference("Users");
+
+        if(requestCode == USER_CODE){
+
+        }
+        if(requestCode == ONE_USER){
+            query = FirebaseDatabase.getInstance().getReference("Users").orderByKey().equalTo(othUid);
+            Toast.makeText(getApplicationContext(), query.toString(), Toast.LENGTH_SHORT).show();
+        }
 
         FirebaseListOptions<User> options;
            options =  new FirebaseListOptions.Builder<User>()
@@ -271,11 +274,6 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
                 email.setText(model.getEmail());
                 name.setText(model.getUsername());
-
-                String id = model.getId();
-
-                Toast.makeText(getApplicationContext(), "id je " + id, Toast.LENGTH_SHORT).show();
-
             }
         };
         assert listOfUsers != null;
@@ -285,14 +283,11 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
 
 
     @Override
-    public void onStop() {
+    protected void onStop() {
         super.onStop();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
         }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.button_bar, menu);
-        return true;
     }
 
     @Override
@@ -360,10 +355,7 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         btn_close.setText("X");
         email.setText(user1.getEmail());
         username.setText(user1.getUsername());
-        isPhotoSet = user1.getPhoto();
-
         setPhoto(user1.getId(), photo, 400, 500);
-
 
         btn_close.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -385,8 +377,7 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                 Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                 intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-                //intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 10000000);
-                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo...");
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Voice recognition Demo");
 
                 try {
                     startActivityForResult(intent, RESULT_SPEECH);
@@ -401,7 +392,6 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
         btn_sendMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(UserListActivity.this, "send message to " + user1.getUsername() + " ?", Toast.LENGTH_SHORT).show();
                 Intent i = new Intent(getApplicationContext(), ChattingActivity.class);
                 i.putExtra("otherUser", user1);
                 startActivity(i);
@@ -446,22 +436,24 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
     }
 
 
-    public boolean findUser(String name){
+    public boolean findUserByName(String name){
 
         DatabaseReference dbref = FirebaseDatabase.getInstance().getReference("Users");
         dbref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for(DataSnapshot ds : dataSnapshot.getChildren()){
-                    if (ds.getValue(User.class).getUsername().equals(name)){
-
+                    if (ds.getValue(User.class).getUsername().toLowerCase().equals(name)){
+                        othUid = ds.getValue(User.class).getId();
+                        displayUsers(ONE_USER, 1, getIntent());
+                        return;
                     }
                 }
+                displayUsers(USER_CODE, 1, getIntent());
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
             }
         });
         return false;
@@ -470,7 +462,6 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
     public void setPhoto(String id, ImageView image, int width, int height){
         StorageReference storage;
         storage = FirebaseStorage.getInstance().getReference().child(id);
-
         final long ONE_MEGABYTE = 1024 * 1024;
 
         storage.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
@@ -480,8 +471,7 @@ public class UserListActivity extends AppCompatActivity implements  TextToSpeech
                 imageBitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.length);
                 imageBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
             }
-            catch(Exception ex) {
-            }
+            catch(Exception ex) { }
 
             image.setImageBitmap(imageBitmap);
 

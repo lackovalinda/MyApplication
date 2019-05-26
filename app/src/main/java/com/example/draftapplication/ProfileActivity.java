@@ -1,12 +1,15 @@
 package com.example.draftapplication;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -92,7 +96,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                             if (d.getValue().equals("set")) {
                                 isPhotoSet = true;
                                 setPhoto();
-                                Toast.makeText(getApplicationContext(), "photo is set " + isPhotoSet, Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
@@ -104,10 +107,9 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             });
 
             returnName(uid);
-
-            if (isPhotoSet) {
+            /*if (isPhotoSet) {
                 setPhoto();
-            }
+            }*/
             image.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 
@@ -170,42 +172,30 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                     }
                     break;
                 case "Delete user":
-
                     if (user != null) {
-                        String key = user.getUid();
-                        Toast.makeText(getApplicationContext(), "id is " + key, Toast.LENGTH_SHORT).show();
-
-                        user.delete()
-                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                        @Override
-                                        public void onComplete(Task<Void> task) {
-                                            if (task.isSuccessful()) {
-                                                DatabaseReference dr = FirebaseDatabase.getInstance().getReference("Users").child(key);
-                                                //Toast.makeText(getApplicationContext(), dr.toString(), Toast.LENGTH_SHORT).show();
-
-                                                dr.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                    @Override
-                                                    public void onComplete(@NonNull Task<Void> task) {
-                                                        //Toast.makeText(getApplicationContext(), "user was deleted!", Toast.LENGTH_SHORT).show();
-                                                    }
-                                                });
-                                                FirebaseStorage.getInstance().getReference().child(key).delete();
-                                                //Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                                            }
+                        showCustomDialog("Do yiou wish to delete user?",
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Intent intent = new Intent(getIntent());
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        startActivity(intent);
+                                        switch (which){
+                                            case DialogInterface.BUTTON_POSITIVE:
+                                                deleteUser(user);
+                                                break;
+                                            default:
                                         }
-                                    });
-                        }
+                                    }
+                                });
 
-                    finish();
-                    break;
+                        }
                 default:
                     Toast.makeText(getApplicationContext(), "default: " + item.getTitle(), Toast.LENGTH_LONG).show();
                     break;
             }
             return true;
             });
-
 
         ImageButton btn_send = (ImageButton) findViewById(R.id.sendMessage);
         ImageButton group_chat = (ImageButton) findViewById(R.id.friends);
@@ -233,6 +223,13 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getApplicationContext(), ChattingActivity.class));
+            }
+        });
+
+        btn_send.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), ViewChatsActivity.class));
             }
         });
     }
@@ -353,7 +350,7 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             StorageReference storageRef = storage.getReference().child(uid);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Bitmap convertedImage = getResizedBitmap(bitmap, 350);
+            Bitmap convertedImage = getResizedBitmap(bitmap, 400);
             convertedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             final byte[] array = baos.toByteArray();
 
@@ -377,6 +374,42 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showCustomDialog(String message, DialogInterface.OnClickListener listener) {
+        new AlertDialog.Builder(ProfileActivity.this)
+                .setMessage(message)
+                .setPositiveButton("Delete", listener)
+                .setNegativeButton("No", listener)
+                .setCancelable(false)
+                .create()
+                .show();
+    }
+
+    private void deleteUser(FirebaseUser user){
+        String key = user.getUid();
+        Toast.makeText(getApplicationContext(), "id is " + key, Toast.LENGTH_SHORT).show();
+
+        user.delete()
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            DatabaseReference dr = FirebaseDatabase.getInstance().getReference("Users").child(key);
+                            //Toast.makeText(getApplicationContext(), dr.toString(), Toast.LENGTH_SHORT).show();
+
+                            dr.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    //Toast.makeText(getApplicationContext(), "user was deleted!", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                            FirebaseStorage.getInstance().getReference().child(key).delete();
+                            //Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                        }
+                    }
+                });
     }
 
     @Override

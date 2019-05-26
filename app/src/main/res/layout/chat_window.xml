@@ -27,7 +27,7 @@
         android:layout_height="480dp"
         android:paddingBottom="10dp"
         android:divider="@android:color/transparent"
-        android:dividerHeight="16dp"
+        android:dividerHeight="10dp"
         android:transcriptMode="alwaysScroll" />
 
     <LinearLayout
@@ -52,7 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginHorizontal="10dp"
-            android:background="@android:drawable/ic_menu_send"
+            android:background="@drawable/send"
             android:padding="20dp"
             android:scaleType="fitCenter" />
     </LinearLayout>

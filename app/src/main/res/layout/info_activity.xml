@@ -29,20 +29,32 @@
             android:layout_height="wrap_content"
             android:text="TextView"
             android:textSize="20sp" />
+    </LinearLayout>
 
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TextView"
-            android:textSize="20sp" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20sp"
+        android:paddingRight="20sp"
+        android:padding="5dp"
+        android:gravity="bottom|center_horizontal"
+        android:layout_gravity="center|bottom">
 
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TextView"
-            android:textSize="20sp" />
+        <LinearLayout
+            android:background="@color/magentaPink"
+            android:orientation="vertical"
+            android:layout_width="100dp"
+            android:layout_height="80dp"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/button1"
+                android:layout_width="50dp"
+                android:layout_height="58dp"
+                android:background="@drawable/volume"
+                app:maxImageSize="20sp" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

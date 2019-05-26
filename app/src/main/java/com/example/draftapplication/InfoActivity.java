@@ -1,79 +1,114 @@
 package com.example.draftapplication;
 
 import android.content.Intent;
+import android.media.Image;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.speech.tts.TextToSpeech;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import java.util.Locale;
 
-public class InfoActivity extends AppCompatActivity {
-    private FirebaseAuth mAuth;
-    private FirebaseUser user;
+public class InfoActivity extends AppCompatActivity implements TextToSpeech.OnInitListener{
+    private static final int MY_DATA_CHECK_CODE = 100;
+    private ImageButton btn;
+    private TextToSpeech textToSpeech;
+    private String record = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.info_activity);
+        btn = (ImageButton) findViewById(R.id.button1);
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.toolbar);
         myToolbar.setTitle("About");
-        setSupportActionBar(myToolbar);
-        myToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+        TextView tv1 = findViewById(R.id.textView);
+        String text = "This app was delivered as a product of bachelor thesis. Its potential could contribute to community of visual impaired and blind people. \n\n" +
+                "Source of used icon: \nSource of used emojis: \nBackend and message services provided by FireBase. \n \n" +
+                "Instruction to use: \n- user is able to sign up directly via google account or he could use any existing email to register\" +\n" +
+                "\nLONG PRESS on button enables voice assistant";
 
+        tv1.setText(text);
+
+        btn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onMenuItemClick(MenuItem item) {
+            public void onClick(View v) {
+                textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
 
-                String id = item.getTitle().toString();
+                    @Override
+                    public void onInit(int status) {
+                    }
+                });
 
-                switch (id) {
-                    case "Users":
-                        startActivity(new Intent(getApplicationContext(), UserListActivity.class));
-                        break;
-                    case "About":
-                        //startActivity(new Intent(getApplicationContext(), InfoActivity.class));
-                        break;
-                    case "Profile":
-                        startActivity(new Intent(getApplicationContext(), ProfileActivity.class));
-                        break;
-                    case "Settings":
-                        startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
-                        break;
-                    default:
-                        Toast.makeText(getApplicationContext(), "default: " + item.getTitle(), Toast.LENGTH_LONG).show();
-                        break;
-                }
-                return true;
+                Intent checkTTSIntent = new Intent();
+                checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+                startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
+                record = text;
             }
         });
-
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
-
-        TextView tv1 = findViewById(R.id.textView);
-        TextView tv2 = findViewById(R.id.textView2);
-        TextView tv3 = findViewById(R.id.textView3);
-
-        tv1.setText("This app was delivered as a product of bachelor thesis. Its potential could contribute to community of visual impaired and blind people." );
-        tv2.setText("Source of used icon: \n Source of used emojis: \n Backend and message services provided by FireBase. \n");
-
-        tv3.setText("Instruction to use: \n- user is able to sign up directly via google account or he could use any existing email to register" +
-                 "\n LONG PRESS on button enables voice assistant " );
-
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
-        getMenuInflater().inflate(R.menu.button_bar, menu);
-        return super.onCreateOptionsMenu(menu);
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode){
+            case MY_DATA_CHECK_CODE:
+                if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+                    textToSpeech.setLanguage(Locale.UK);
+                    textToSpeech = new TextToSpeech(this, this);
+                } else {
+                    Intent installIntent = new Intent();
+                    Toast.makeText(getApplicationContext(), "installing TTS", Toast.LENGTH_SHORT).show();
+                    installIntent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                    startActivity(installIntent);
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            if (textToSpeech != null) {
+                int result = textToSpeech.setLanguage(Locale.US);
+                if (result == TextToSpeech.LANG_MISSING_DATA ||
+                        result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Toast.makeText(this, "TTS language is not supported", Toast.LENGTH_LONG).show();
+                } else {
+                    if (record != null) {
+                        saySomething(record, 0);
+                        record = null;
+                    }else {
+                        saySomething("TTS is ready", 0);
+                    }
+                }
+            }
+        } else {
+            Toast.makeText(this, "TTS initialization failed", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void saySomething(String text, int qmode) {
+        if (qmode == 1) {
+            textToSpeech.speak(text, TextToSpeech.QUEUE_ADD, null);
+        }
+        else
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+        }
     }
 }

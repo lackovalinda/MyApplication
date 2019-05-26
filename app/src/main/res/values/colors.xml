@@ -4,11 +4,13 @@
     <color name="colorPrimaryLight">#9DE740</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
-    <color name="blue">#239CBD</color>
-    <color name="pinkRed">#a6767c</color>
     <color name="magentaPink">#D10D71</color>
+    <color name="grey">#8D8989</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#030303</color>
     <color name="violet">#A61CBD</color>
     <color name="darkBlue">#1C276F</color>
+    <color name="pinkRed">#a6767c</color>
+    <color name="blue">#9556AAE4</color>
+
 </resources>

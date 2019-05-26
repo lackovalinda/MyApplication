@@ -4,7 +4,7 @@ import android.app.Application;
 
 public class Globals extends Application {
     private boolean isChecked;
-    private boolean permissionsAccepted;
+    private String userId;
 
     public boolean getSettings(){
         return this.isChecked;
@@ -14,11 +14,11 @@ public class Globals extends Application {
         this.isChecked = option;
     }
 
-    public boolean getPermissionsAccepted(){
-        return permissionsAccepted;
+    public void setUserId(String userId){
+        this.userId  = userId;
     }
 
-    public void setPermissionsAccepted(boolean permissions){
-        this.permissionsAccepted = permissions;
+    public String getUserId(){
+        return userId;
     }
 }

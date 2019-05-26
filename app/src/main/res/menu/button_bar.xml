@@ -22,7 +22,7 @@
     <item
         android:id="@+id/users"
         android:title="Users"
-        android:icon="@drawable/message"
+        android:icon="@drawable/find"
         app:showAsAction="ifRoom"
         tools:ignore="HardcodedText" />
 
