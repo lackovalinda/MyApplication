@@ -20,7 +20,7 @@
         In default mode, there is enabled Google Voice Assistant on the majority of buttons and actions,
         those setting could be change later in application settings. \n\nThere are also special buttons highlighted with pink-magenta colour, which appears within the actions that require input
         - a user is able to use this button to record his own voice and it will be converted into plain text.
-        \n\nHopefully</string>
+        \n\nAnyway, enjoy the chatting!</string>
     <string name="proceed_to_register">Proceed to register</string>
     <string name="fb_app_id">317941182223076</string>
     <string name="fb_login_protocol_scheme">fb1343643482425305</string>

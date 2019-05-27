@@ -31,9 +31,9 @@ public class InfoActivity extends AppCompatActivity implements TextToSpeech.OnIn
         myToolbar.setTitle("About");
         TextView tv1 = findViewById(R.id.textView);
         String text = "This app was delivered as a product of bachelor thesis. Its potential could contribute to community of visual impaired and blind people. \n\n" +
-                "Source of used icon: \nSource of used emojis: \nBackend and message services provided by FireBase. \n \n" +
-                "Instruction to use: \n- user is able to sign up directly via google account or he could use any existing email to register\" +\n" +
-                "\nLONG PRESS on button enables voice assistant";
+                "Source of used icon: http://iconshow.me/ \nBackend and message services provided by FireBase. \n \n" +
+                "Instruction to use: \n- user is able to sign up directly via google account or he could use any existing email to register \n" +
+                "\nLONG PRESS on button enables voice output \nPINK BUTTONS with SPEAKER ICON reads the whole page";
 
         tv1.setText(text);
 

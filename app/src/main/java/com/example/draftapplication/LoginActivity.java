@@ -214,11 +214,13 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     public void downloadPhoto(GoogleSignInAccount acct, String uid){
         Uri personPhoto = acct.getPhotoUrl();
 
-        FirebaseStorage.getInstance().getReference().child(uid).putFile(personPhoto).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+        if (personPhoto != null) {
+            FirebaseStorage.getInstance().getReference().child(uid).putFile(personPhoto).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-            }
-        });
+                }
+            });
+        }
     }
 }

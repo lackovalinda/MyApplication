@@ -92,6 +92,7 @@
             android:gravity="center"
             android:orientation="vertical"
             android:visibility="invisible" />
+
         <LinearLayout
             android:background="@color/colorPrimaryLight"
             android:gravity="center"
@@ -101,10 +102,10 @@
             >
 
             <ImageButton
-                android:id="@+id/sendMessage"
-                android:layout_width="154dp"
-                android:layout_height="123dp"
-                android:background="@drawable/message"
+                android:id="@+id/find"
+                android:layout_width="120dp"
+                android:layout_height="107dp"
+                android:background="@drawable/find"
                 app:maxImageSize="20sp" />
         </LinearLayout>
     </LinearLayout>
@@ -148,11 +149,11 @@
             >
 
             <ImageButton
-                android:id="@+id/find"
-                android:layout_width="120dp"
-                android:layout_height="107dp"
-                android:background="@drawable/find"
-                app:maxImageSize="20sp" />
+                android:id="@+id/settings"
+                android:layout_width="113dp"
+                android:layout_height="113dp"
+                android:background="@drawable/settings"
+                app:maxImageSize="100sp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -205,12 +205,6 @@ public class ChattingActivity extends AppCompatActivity implements TextToSpeech.
                 messageUser.setText(model.getMessageUser());
                 messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)", model.getMessageTime()));
 
-                if(model.getMessageUserID().equals("HY95Ptm5hdNy9q3vVNTEOGgyjdk1"))
-                    v.setRight(position);
-                else
-                    v.setLeft(position);
-
-
             }
         };
         assert listOfMessages != null;

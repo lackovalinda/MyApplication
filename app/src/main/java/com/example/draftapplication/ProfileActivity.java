@@ -107,9 +107,7 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             });
 
             returnName(uid);
-            /*if (isPhotoSet) {
-                setPhoto();
-            }*/
+
             image.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
 
@@ -191,13 +189,12 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
 
                         }
                 default:
-                    Toast.makeText(getApplicationContext(), "default: " + item.getTitle(), Toast.LENGTH_LONG).show();
                     break;
             }
             return true;
             });
 
-        ImageButton btn_send = (ImageButton) findViewById(R.id.sendMessage);
+        ImageButton btn_send = (ImageButton) findViewById(R.id.settings);
         ImageButton group_chat = (ImageButton) findViewById(R.id.friends);
         ImageButton find = (ImageButton) findViewById(R.id.find);
         ImageButton info = (ImageButton) findViewById(R.id.about);
@@ -229,7 +226,7 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
         btn_send.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getApplicationContext(), ViewChatsActivity.class));
+                startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
             }
         });
     }
@@ -250,6 +247,7 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                     if (resultCode == RESULT_OK)
                       uploadPhoto(data);
                     break;
+
 
                 default:
                     super.onActivityResult(requestCode, resultCode, data);
@@ -314,22 +312,20 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
         final long ONE_MEGABYTE = 1024 * 1024;
 
         storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(bytes -> {
-            byte[] imageData = null;
             Bitmap imageBitmap = null;
             try
             {
-                progressDialog = new ProgressDialog(this);
-                progressDialog.setTitle("Retrieving user data");
-                progressDialog.show();
-                final int THUMBNAIL_SIZE = 64;
                 imageBitmap = BitmapFactory.decodeByteArray(bytes, 0 , bytes.length);
                 imageBitmap = Bitmap.createScaledBitmap(imageBitmap, 400, 500, false);
-                progressDialog.dismiss();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                Bitmap convertedImage = getResizedBitmap(imageBitmap, 500);
+                convertedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                final byte[] array = baos.toByteArray();
+                image.setImageBitmap(convertedImage);
             }
             catch(Exception ex) {
             }
 
-            image.setImageBitmap(imageBitmap);
 
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -350,7 +346,7 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
             StorageReference storageRef = storage.getReference().child(uid);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            Bitmap convertedImage = getResizedBitmap(bitmap, 400);
+            Bitmap convertedImage = getResizedBitmap(bitmap, 500);
             convertedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
             final byte[] array = baos.toByteArray();
 
@@ -388,7 +384,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
 
     private void deleteUser(FirebaseUser user){
         String key = user.getUid();
-        Toast.makeText(getApplicationContext(), "id is " + key, Toast.LENGTH_SHORT).show();
 
         user.delete()
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -405,7 +400,6 @@ public class ProfileActivity extends AppCompatActivity implements OnClickListene
                                 }
                             });
                             FirebaseStorage.getInstance().getReference().child(key).delete();
-                            //Toast.makeText(getApplicationContext(), "User deleted", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(getApplicationContext(), MainActivity.class));
                         }
                     }

@@ -63,7 +63,6 @@
 
         <activity android:name=".InfoActivity"/>
         <activity android:name=".FirstActivity" android:theme="@style/AppTheme2"/>
-        <activity android:name=".ViewChatsActivity"/>
         <activity android:name=".ChattingActivity" />
 
     </application>
